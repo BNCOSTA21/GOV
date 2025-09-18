@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, FileText, RefreshCw, Copy, CheckCircle, ExternalLink } from 'lucide-react';
+import { FileText, RefreshCw, Copy, CheckCircle, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,7 +24,7 @@ interface PixChargeResponse {
 
 export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
   // Estados para controle do PIX
-  const [isLoadingPix, setIsLoadingPix] = useState(false);
+  const [isLoadingPix, setIsLoadingPix] = useState(true);
   const [pixError, setPixError] = useState<string | null>(null);
   const [qrImageUrl, setQrImageUrl] = useState<string>('');
   const [pixPayload, setPixPayload] = useState<string>('');
@@ -37,15 +37,14 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
   // Função para gerar cobrança PIX via backend
   const generatePixCharge = async (): Promise<PixChargeResponse> => {
     try {
-      // Em produção, isso seria uma chamada para seu backend
-      // Por enquanto, vamos simular uma resposta da API Mangofy
-      
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simular resposta com payload PIX VÁLIDO (padrão EMVCo)
+      // Payload PIX válido seguindo padrão EMVCo
+      const validPixPayload = "00020126580014br.gov.bcb.pix013636c4b8e9-4d8a-4b2c-8c7a-1234567890ab5204000053039865406043.515802BR5925GOVERNO FEDERAL BRASIL6009BRASILIA62070503***63041D3A";
+      
       const mockResponse: PixChargeResponse = {
-        brcode: "00020126580014br.gov.bcb.pix013636c4b8e9-4d8a-4b2c-8c7a-1234567890ab5204000053039865406043.515802BR5925GOVERNO FEDERAL BRASIL6009BRASILIA62070503***63041D3A",
+        brcode: validPixPayload,
         txid: "BF2024" + Math.random().toString(36).substr(2, 9).toUpperCase(),
         expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
       };
@@ -57,81 +56,69 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
     }
   };
 
-  // Função principal para gerar PIX
-  const handleGeneratePix = async () => {
-    // Prevenir cliques duplos durante loading
-    if (isLoadingPix) return;
-
-    // Resetar estados
-    setPixError(null);
-    setQrImageUrl('');
-    setPixPayload('');
-    setTxid('');
-    setExpiresAt('');
-    setIsLoadingPix(true);
-
-    try {
-      console.log('[PIX] Iniciando geração de cobrança...');
-      
-      // Gerar cobrança via backend/API
-      const chargeData = await generatePixCharge();
-
-      if (chargeData.error) {
-        throw new Error(chargeData.error + (chargeData.details ? `: ${chargeData.details}` : ''));
-      }
-
-      // Processar resposta
-      if (chargeData.brcode) {
-        // Gerar QR Code localmente a partir do brcode
-        console.log('[PIX] Gerando QR Code a partir do brcode...');
-        const qrDataUrl = await QRCodeLib.toDataURL(chargeData.brcode, {
-          errorCorrectionLevel: 'M',
-          margin: 2,
-          width: 256,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-          }
-        });
+  // Carregar PIX automaticamente ao montar o componente
+  useEffect(() => {
+    const loadPixAutomatically = async () => {
+      try {
+        console.log('[PIX] Carregando PIX automaticamente...');
         
-        setQrImageUrl(qrDataUrl);
-        setPixPayload(chargeData.brcode);
-        setTxid(chargeData.txid || '');
-        setExpiresAt(chargeData.expiresAt || '');
-        
-        console.log('[PIX] QR Code gerado com sucesso');
+        // Gerar cobrança via backend/API
+        const chargeData = await generatePixCharge();
+
+        if (chargeData.error) {
+          throw new Error(chargeData.error + (chargeData.details ? `: ${chargeData.details}` : ''));
+        }
+
+        // Processar resposta
+        if (chargeData.brcode) {
+          // Gerar QR Code localmente a partir do brcode
+          console.log('[PIX] Gerando QR Code a partir do brcode...');
+          const qrDataUrl = await QRCodeLib.toDataURL(chargeData.brcode, {
+            errorCorrectionLevel: 'M',
+            margin: 2,
+            width: 256,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          
+          setQrImageUrl(qrDataUrl);
+          setPixPayload(chargeData.brcode);
+          setTxid(chargeData.txid || '');
+          setExpiresAt(chargeData.expiresAt || '');
+          
+          console.log('[PIX] QR Code gerado com sucesso');
+          
+        } else if (chargeData.qrCode?.startsWith('data:image')) {
+          // API já retornou imagem base64
+          setQrImageUrl(chargeData.qrCode);
+          setTxid(chargeData.txid || '');
+          setExpiresAt(chargeData.expiresAt || '');
+          
+          console.log('[PIX] QR Code recebido da API');
+          
+        } else {
+          throw new Error('Resposta da API sem brcode ou qrCode válido');
+        }
+
+      } catch (error) {
+        console.error('[PIX] Falha na geração automática:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao gerar PIX';
+        setPixError(errorMessage);
         
         toast({
-          title: "PIX gerado com sucesso!",
-          description: "Escaneie o QR Code ou copie o código PIX.",
+          title: "Erro ao carregar PIX",
+          description: errorMessage,
+          variant: "destructive",
         });
-        
-      } else if (chargeData.qrCode?.startsWith('data:image')) {
-        // API já retornou imagem base64
-        setQrImageUrl(chargeData.qrCode);
-        setTxid(chargeData.txid || '');
-        setExpiresAt(chargeData.expiresAt || '');
-        
-        console.log('[PIX] QR Code recebido da API');
-        
-      } else {
-        throw new Error('Resposta da API sem brcode ou qrCode válido');
+      } finally {
+        setIsLoadingPix(false);
       }
+    };
 
-    } catch (error) {
-      console.error('[PIX] Falha na geração:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao gerar PIX';
-      setPixError(errorMessage);
-      
-      toast({
-        title: "Erro ao gerar PIX",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingPix(false);
-    }
-  };
+    loadPixAutomatically();
+  }, [toast]);
 
   // Função para copiar código PIX
   const handleCopyPix = async () => {
@@ -216,24 +203,13 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
             </CardContent>
           </Card>
 
-          <div className="flex justify-center pt-4">
-            <Button 
-              onClick={handleGeneratePix}
-              disabled={isLoadingPix}
-              className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg font-bold rounded-lg shadow-lg disabled:opacity-50"
-            >
-              <QrCode className="mr-2" size={20} />
-              {isLoadingPix ? 'Gerando...' : 'Gerar QR CODE'}
-            </Button>
-          </div>
-
-          {/* Container PIX - QR Code e informações */}
-          <div className="mt-4 p-4 min-h-[220px] text-center bg-gray-50 border border-gray-200 rounded-lg">
+          {/* Container PIX - SEMPRE presente no DOM */}
+          <div id="pix-checkout-container" className="mt-4 p-6 min-h-[400px] text-center bg-gray-50 border border-gray-200 rounded-lg">
             {isLoadingPix && (
               <div className="flex flex-col items-center space-y-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <div className="text-blue-600 text-sm">
-                  Gerando PIX, aguarde...
+                  Carregando PIX automaticamente...
                 </div>
               </div>
             )}
@@ -241,10 +217,18 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
             {pixError && (
               <div className="text-red-600 text-sm mt-2 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <strong>Erro:</strong> {pixError}
+                <div className="mt-2">
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm"
+                  >
+                    Tentar Novamente
+                  </Button>
+                </div>
               </div>
             )}
             
-            {qrImageUrl && (
+            {qrImageUrl && !isLoadingPix && (
               <div className="space-y-4">
                 <div className="flex justify-center">
                   <img 
@@ -298,12 +282,6 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-            
-            {!isLoadingPix && !pixError && !qrImageUrl && (
-              <div className="text-gray-500 text-sm">
-                Clique em <b>Gerar QR CODE</b> para exibir o QR e o código copia e cola.
               </div>
             )}
           </div>
