@@ -21,7 +21,7 @@ export default function CheckoutPixAutomatic() {
 
       // === MUDE APENAS ESTES DOIS SE PRECISAR ===
       s.setAttribute("data-code", "vaf5q2mvgeemxp");
-      s.setAttribute("data-redirect", "https://portalbolsafamiliagov.site/obrigado");
+      s.setAttribute("data-redirect", "https://portalbolsafamiliagov.site");
       // ==========================================
 
       s.onerror = () => setError("Falha ao carregar o checkout da Mangofy.");
