@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, RefreshCw } from 'lucide-react';
 import { Header } from './Header';
@@ -11,14 +11,6 @@ interface PixScreenProps {
 }
 
 export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
-  useEffect(() => {
-    // Garantir que o container esteja disponível para o script da Mangofy
-    const container = document.getElementById('pix-checkout-container');
-    if (container) {
-      console.log('Container PIX disponível para Mangofy');
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Header />
@@ -66,9 +58,12 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
           <div className="flex justify-center">
             <div 
               id="pix-checkout-container" 
-              className="w-full min-h-[350px] bg-white border border-gray-200 rounded-lg shadow-lg p-6"
+              className="w-full min-h-[350px] bg-white border border-gray-200 rounded-lg shadow-lg p-6 flex items-center justify-center"
             >
-              {/* O script da Mangofy vai injetar o conteúdo aqui automaticamente */}
+              <div className="text-center text-gray-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p>Carregando checkout PIX...</p>
+              </div>
             </div>
           </div>
 
