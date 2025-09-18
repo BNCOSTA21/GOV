@@ -22,7 +22,7 @@ export interface UserData {
   validationHtmlUrl?: string;
 }
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('pix');
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
   const [userData, setUserData] = useState<UserData | null>(null);
 
   const navigateTo = (screen: ScreenType) => {
