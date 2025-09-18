@@ -221,30 +221,3 @@ const PixScreen: React.FC = () => {
 };
 
 export default PixScreen;
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button 
-              onClick={handleDarf}
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg shadow-lg"
-            >
-              <FileText className="mr-2" size={20} />
-              Gerar DARF
-            </Button>
-            <Button 
-              onClick={handleVerifyPayment}
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg shadow-lg"
-            >
-              <RefreshCw className="mr-2" size={20} />
-              Verificar Pagamento
-            </Button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
-
-export default PixScreen;
