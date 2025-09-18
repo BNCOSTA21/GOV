@@ -43,9 +43,9 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simular resposta da Mangofy (substitua pela chamada real ao seu backend)
+      // Simular resposta com payload PIX VÁLIDO (padrão EMVCo)
       const mockResponse: PixChargeResponse = {
-        brcode: "00020126580014br.gov.bcb.pix013636c4b8e9-4d8a-4b2c-8c7a-1234567890ab5204000053039865802BR5925GOVERNO FEDERAL BRASIL6009BRASILIA62070503***6304A1B2",
+        brcode: "00020126580014br.gov.bcb.pix013636c4b8e9-4d8a-4b2c-8c7a-1234567890ab5204000053039865406043.515802BR5925GOVERNO FEDERAL BRASIL6009BRASILIA62070503***63041D3A",
         txid: "BF2024" + Math.random().toString(36).substr(2, 9).toUpperCase(),
         expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
       };
