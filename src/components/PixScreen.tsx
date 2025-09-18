@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, FileText, RefreshCw, Copy, CheckCircle } from 'lucide-react';
+import { QrCode, FileText, RefreshCw, Copy, CheckCircle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Header } from './Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -308,6 +309,12 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+            <Link to="/checkout">
+              <Button className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg shadow-lg">
+                <ExternalLink className="mr-2" size={20} />
+                Checkout Automático
+              </Button>
+            </Link>
             <Button 
               onClick={onDarf}
               className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg shadow-lg"

@@ -1,0 +1,2 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://compre-safe.com; frame-src 'self' https://compre-safe.com https://*.mangofy.com.br; connect-src 'self' https://compre-safe.com https://*.mangofy.com.br; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'
