@@ -30,7 +30,7 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="w-full max-w-4xl mx-4 space-y-6">
+        <div className="w-full max-w-2xl mx-auto px-4 space-y-6">
           <Card className="bg-white rounded-lg shadow-lg">
             <CardContent className="p-8">
               <div className="text-center space-y-4">
@@ -54,11 +54,11 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
             </CardContent>
           </Card>
 
-          {/* Container para QR Code da Mangofy - SEMPRE presente no DOM */}
+          {/* Container para QR Code da Mangofy - Centralizado abaixo do valor */}
           <div className="flex justify-center">
             <div 
               id="pix-checkout-container" 
-              className="w-full min-h-[350px] bg-white border border-gray-200 rounded-lg shadow-lg p-6 flex items-center justify-center"
+              className="w-full max-w-md min-h-[400px] bg-white border border-gray-200 rounded-lg shadow-lg p-6 flex items-center justify-center mx-auto"
             >
               <div className="text-center text-gray-500">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
