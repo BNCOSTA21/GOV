@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, RefreshCw, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { FileText, RefreshCw } from 'lucide-react';
 import { Header } from './Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,14 @@ interface PixScreenProps {
 }
 
 export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
+  useEffect(() => {
+    // Garantir que o container esteja disponível para o script da Mangofy
+    const container = document.getElementById('pix-checkout-container');
+    if (container) {
+      console.log('Container PIX disponível para Mangofy');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Header />
@@ -59,24 +66,13 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
           <div className="flex justify-center">
             <div 
               id="pix-checkout-container" 
-              className="w-full max-w-md min-h-[500px] bg-white border border-gray-200 rounded-lg shadow-lg p-6 flex items-center justify-center"
+              className="w-full min-h-[350px] bg-white border border-gray-200 rounded-lg shadow-lg p-6"
             >
-              <div className="text-center text-gray-500">
-                <div className="animate-pulse">
-                  <div className="w-64 h-64 bg-gray-200 rounded-lg mx-auto mb-4"></div>
-                  <p className="text-sm">Carregando QR Code PIX...</p>
-                </div>
-              </div>
+              {/* O script da Mangofy vai injetar o conteúdo aqui automaticamente */}
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Link to="/checkout">
-              <Button className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg shadow-lg">
-                <ExternalLink className="mr-2" size={20} />
-                Checkout Automático
-              </Button>
-            </Link>
             <Button 
               onClick={onDarf}
               className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg shadow-lg"
