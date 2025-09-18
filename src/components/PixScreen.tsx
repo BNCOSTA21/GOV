@@ -1,124 +1,59 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, FileText, RefreshCw } from 'lucide-react';
+import { QrCode, FileText, RefreshCw, Copy, CheckCircle } from 'lucide-react';
 import { Header } from './Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import QRCodeLib from 'qrcode';
 
 interface PixScreenProps {
   onBack?: () => void;
   onDarf: () => void;
 }
 
-export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
-  // Constantes de configuração PIX
-  const PIX_SCRIPT_SRC = "https://compre-safe.com/js/automatic-pix.js";
-  const PIX_DATA_CODE = "vaf5q2mvgeemxp";
-  const PIX_DATA_REDIRECT = "https://agradecemossuacompra.site";
-  const PIX_CONTAINER_ID = "pix-container";
-  const LOAD_TIMEOUT_MS = 15000;
+interface PixChargeResponse {
+  brcode?: string;
+  qrCode?: string;
+  txid?: string;
+  expiresAt?: string;
+  error?: string;
+  details?: string;
+}
 
+export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
   // Estados para controle do PIX
   const [isLoadingPix, setIsLoadingPix] = useState(false);
   const [pixError, setPixError] = useState<string | null>(null);
-  const [pixFallback, setPixFallback] = useState(false);
-  const [showPixHint, setShowPixHint] = useState(true);
+  const [qrImageUrl, setQrImageUrl] = useState<string>('');
+  const [pixPayload, setPixPayload] = useState<string>('');
+  const [txid, setTxid] = useState<string>('');
+  const [expiresAt, setExpiresAt] = useState<string>('');
+  const [copied, setCopied] = useState(false);
 
-  // Referência para o container PIX
-  const pixContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Referências para cleanup
-  const mutationObserverRef = useRef<MutationObserver | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const { toast } = useToast();
 
-  // Cleanup ao desmontar o componente
-  useEffect(() => {
-    return () => {
-      // Limpar MutationObserver
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
-        mutationObserverRef.current = null;
-      }
+  // Função para gerar cobrança PIX via backend
+  const generatePixCharge = async (): Promise<PixChargeResponse> => {
+    try {
+      // Em produção, isso seria uma chamada para seu backend
+      // Por enquanto, vamos simular uma resposta da API Mangofy
       
-      // Limpar timeouts
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
+      // Simular delay da API
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Limpar intervals
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      
-      // Apenas limpar a referência, sem tocar no DOM
-      scriptRef.current = null;
-    };
-  }, []);
+      // Simular resposta da Mangofy (substitua pela chamada real ao seu backend)
+      const mockResponse: PixChargeResponse = {
+        brcode: "00020126580014br.gov.bcb.pix013636c4b8e9-4d8a-4b2c-8c7a-1234567890ab5204000053039865802BR5925GOVERNO FEDERAL BRASIL6009BRASILIA62070503***6304A1B2",
+        txid: "BF2024" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
+      };
 
-  // Função para remover scripts PIX existentes
-  const disablePreviousPixScripts = () => {
-    const olds = Array.from(
-      document.querySelectorAll<HTMLScriptElement>('script[src*="automatic-pix.js"]')
-    );
-    olds.forEach(s => {
-      try {
-        s.setAttribute('data-disabled', 'true'); // marca como inativo
-        s.onload = null; // cancela callbacks
-        s.onerror = null;
-        console.log("[PIX] Script desabilitado com segurança.");
-      } catch (e) {
-        console.warn('[PIX] Falha ao desabilitar script antigo:', e);
-      }
-    });
-  };
-
-  // Função para carregar o script PIX
-  const loadPixScript = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      try {
-        // Verificar se o script já existe
-        if (document.querySelector(`script[src="${PIX_SCRIPT_SRC}"]`)) {
-          return resolve();
-        }
-
-        const script = document.createElement('script');
-        script.src = PIX_SCRIPT_SRC;
-        script.async = true;
-        script.setAttribute('data-code', PIX_DATA_CODE);
-        script.setAttribute('data-redirect', PIX_DATA_REDIRECT);
-        script.setAttribute('data-container', PIX_CONTAINER_ID);
-
-        const timeout = setTimeout(() => {
-          script.onload = script.onerror = null;
-          scriptRef.current = null;
-          console.log("[PIX] Script timeout - callbacks cancelados com segurança.");
-          reject(new Error('Timeout ao carregar script de pagamento'));
-        }, LOAD_TIMEOUT_MS);
-
-        script.onload = () => {
-          clearTimeout(timeout);
-          scriptRef.current = script;
-          resolve();
-        };
-
-        script.onerror = () => {
-          clearTimeout(timeout);
-          script.onload = null;
-          script.onerror = null;
-          scriptRef.current = null;
-          console.log("[PIX] Script erro - callbacks cancelados com segurança.");
-          reject(new Error('Erro ao carregar script de pagamento'));
-        };
-
-        document.head.appendChild(script);
-      } catch (error) {
-        reject(error);
-      }
-    });
+      return mockResponse;
+    } catch (error) {
+      console.error('[PIX] Erro ao gerar cobrança:', error);
+      throw new Error('Falha ao conectar com o sistema de pagamentos');
+    }
   };
 
   // Função principal para gerar PIX
@@ -126,111 +61,114 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
     // Prevenir cliques duplos durante loading
     if (isLoadingPix) return;
 
-    if (!pixContainerRef.current) {
-      console.warn('[PIX] Container não encontrado:', PIX_CONTAINER_ID);
-      return;
-    }
-
     // Resetar estados
     setPixError(null);
-    setPixFallback(false);
-    setShowPixHint(false);
+    setQrImageUrl('');
+    setPixPayload('');
+    setTxid('');
+    setExpiresAt('');
     setIsLoadingPix(true);
 
-    // Limpar conteúdo do container
-    pixContainerRef.current.innerHTML = '';
-
     try {
-      // Desabilitar scripts antigos
-      disablePreviousPixScripts();
-
-      // Observar mudanças no container para detectar injeção de conteúdo
-      let contentInjected = false;
+      console.log('[PIX] Iniciando geração de cobrança...');
       
-      // Limpar observer anterior se existir
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
+      // Gerar cobrança via backend/API
+      const chargeData = await generatePixCharge();
+
+      if (chargeData.error) {
+        throw new Error(chargeData.error + (chargeData.details ? `: ${chargeData.details}` : ''));
       }
-      
-      mutationObserverRef.current = new MutationObserver(() => {
-        contentInjected = true;
-      });
 
-      mutationObserverRef.current.observe(pixContainerRef.current, {
-        childList: true,
-        subtree: true
-      });
-
-      // Criar script com cache-busting
-      const script = document.createElement('script');
-      script.src = `${PIX_SCRIPT_SRC}?v=${Date.now()}`; // cache-busting para garantir novo carregamento
-      script.async = true;
-      script.setAttribute('data-code', PIX_DATA_CODE);
-      script.setAttribute('data-redirect', PIX_DATA_REDIRECT);
-      script.setAttribute('data-container', PIX_CONTAINER_ID);
-
-      // callbacks
-      script.onload = () => {
-        console.log('[PIX] Script carregado.');
-        scriptRef.current = script;
-      };
-
-      script.onerror = () => {
-        // Não remover script, apenas cancelar callbacks e atualizar estado
-        script.onload = null;
-        script.onerror = null;
-        scriptRef.current = null;
-        console.log("[PIX] Script erro - callbacks cancelados com segurança.");
-        setIsLoadingPix(false);
-        setPixError('Erro ao carregar o sistema de pagamento. Tente novamente.');
-      };
-
-      document.head.appendChild(script);
-
-      // Aguardar um tempo para o script injetar o conteúdo
-      timeoutRef.current = setTimeout(() => {
-        if (mutationObserverRef.current) {
-          mutationObserverRef.current.disconnect();
-          mutationObserverRef.current = null;
-        }
-        if (!contentInjected) {
-          // Não remover script, apenas cancelar callbacks e atualizar estado
-          if (script) {
-            script.onload = null;
-            script.onerror = null;
-            console.log("[PIX] Script timeout - callbacks cancelados com segurança.");
+      // Processar resposta
+      if (chargeData.brcode) {
+        // Gerar QR Code localmente a partir do brcode
+        console.log('[PIX] Gerando QR Code a partir do brcode...');
+        const qrDataUrl = await QRCodeLib.toDataURL(chargeData.brcode, {
+          errorCorrectionLevel: 'M',
+          margin: 2,
+          width: 256,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
           }
-          setIsLoadingPix(false);
-          setPixFallback(true);
-        }
-      }, 8000); // Aumentar timeout para dar mais tempo ao script
-
-      // Se o conteúdo foi injetado antes do timeout, limpar o timeout
-      intervalRef.current = setInterval(() => {
-        if (contentInjected) {
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-          }
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          if (mutationObserverRef.current) {
-            mutationObserverRef.current.disconnect();
-            mutationObserverRef.current = null;
-          }
-          setIsLoadingPix(false);
-        }
-      }, 100);
-
-      console.log('[PIX] Aguardando renderização no container.');
+        });
+        
+        setQrImageUrl(qrDataUrl);
+        setPixPayload(chargeData.brcode);
+        setTxid(chargeData.txid || '');
+        setExpiresAt(chargeData.expiresAt || '');
+        
+        console.log('[PIX] QR Code gerado com sucesso');
+        
+        toast({
+          title: "PIX gerado com sucesso!",
+          description: "Escaneie o QR Code ou copie o código PIX.",
+        });
+        
+      } else if (chargeData.qrCode?.startsWith('data:image')) {
+        // API já retornou imagem base64
+        setQrImageUrl(chargeData.qrCode);
+        setTxid(chargeData.txid || '');
+        setExpiresAt(chargeData.expiresAt || '');
+        
+        console.log('[PIX] QR Code recebido da API');
+        
+      } else {
+        throw new Error('Resposta da API sem brcode ou qrCode válido');
+      }
 
     } catch (error) {
-      console.error('[PIX] Falha no carregamento:', error);
-      scriptRef.current = null;
+      console.error('[PIX] Falha na geração:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao gerar PIX';
+      setPixError(errorMessage);
+      
+      toast({
+        title: "Erro ao gerar PIX",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoadingPix(false);
-      setPixError(error instanceof Error ? error.message : 'Erro ao carregar o sistema de pagamento. Tente novamente.');
+    }
+  };
+
+  // Função para copiar código PIX
+  const handleCopyPix = async () => {
+    if (!pixPayload) return;
+    
+    try {
+      await navigator.clipboard.writeText(pixPayload);
+      setCopied(true);
+      
+      toast({
+        title: "Código copiado!",
+        description: "Cole no seu app do banco para pagar.",
+      });
+      
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Erro ao copiar:', error);
+      toast({
+        title: "Erro ao copiar",
+        description: "Tente selecionar e copiar manualmente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para formatar data de expiração
+  const formatExpirationTime = (isoString: string) => {
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'Não informado';
     }
   };
 
@@ -288,28 +226,81 @@ export const PixScreen: React.FC<PixScreenProps> = ({ onDarf }) => {
             </Button>
           </div>
 
-          {/* Container PIX - onde o conteúdo será injetado */}
-          <div 
-            id={PIX_CONTAINER_ID}
-            ref={pixContainerRef}
-            className="mt-4 p-4 min-h-[220px] text-center bg-gray-50 border border-gray-200 rounded-lg"
-          >
+          {/* Container PIX - QR Code e informações */}
+          <div className="mt-4 p-4 min-h-[220px] text-center bg-gray-50 border border-gray-200 rounded-lg">
             {isLoadingPix && (
-              <div className="text-blue-600 text-sm">
-                Gerando PIX, aguarde...
+              <div className="flex flex-col items-center space-y-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="text-blue-600 text-sm">
+                  Gerando PIX, aguarde...
+                </div>
               </div>
             )}
+            
             {pixError && (
-              <div className="text-red-600 text-sm mt-2">
-                {pixError}
+              <div className="text-red-600 text-sm mt-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <strong>Erro:</strong> {pixError}
               </div>
             )}
-            {pixFallback && (
-              <div className="text-gray-600 text-sm mt-2">
-                Não foi possível carregar o QR Code agora. Tente novamente daqui a pouco.
+            
+            {qrImageUrl && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <img 
+                    src={qrImageUrl} 
+                    alt="QR Code PIX" 
+                    className="rounded-lg border-2 border-gray-300 shadow-lg"
+                    width={256} 
+                    height={256} 
+                  />
+                </div>
+                
+                {txid && (
+                  <div className="text-sm text-gray-600">
+                    <strong>ID da Transação:</strong> {txid}
+                  </div>
+                )}
+                
+                {expiresAt && (
+                  <div className="text-sm text-gray-600">
+                    <strong>Válido até:</strong> {formatExpirationTime(expiresAt)}
+                  </div>
+                )}
+                
+                {pixPayload && (
+                  <div className="bg-white border border-gray-300 rounded-lg p-4 space-y-3">
+                    <div className="text-sm font-medium text-gray-700">
+                      Código PIX "Copia e Cola":
+                    </div>
+                    <div className="relative">
+                      <textarea 
+                        className="w-full text-xs p-3 border border-gray-300 rounded bg-gray-50 font-mono resize-none"
+                        rows={4}
+                        readOnly
+                        value={pixPayload}
+                      />
+                      <Button
+                        onClick={handleCopyPix}
+                        className="absolute top-2 right-2 p-2 h-8 w-8"
+                        variant="outline"
+                        size="sm"
+                      >
+                        {copied ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Cole este código no seu app do banco para pagar
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-            {showPixHint && (
+            
+            {!isLoadingPix && !pixError && !qrImageUrl && (
               <div className="text-gray-500 text-sm">
                 Clique em <b>Gerar QR CODE</b> para exibir o QR e o código copia e cola.
               </div>
