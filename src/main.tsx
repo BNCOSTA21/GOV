@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 
 // Importar todas as páginas do funil
@@ -18,7 +18,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         {/* Funil completo com rotas separadas */}
-        <Route path="/" element={<LoginScreen />} />
+        <Route path="/" element={<Navigate to="/consulta" replace />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/consulta" element={<ConsultaScreen />} />
         <Route path="/resultado" element={<ResultadoScreen />} />
